@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1>Available Events</h1>
+  {% if events %}
+    <ul class="events">
+      {% for e in events %}
+        <li class="event-card">
+          <h3>{{ e['title'] }}</h3>
+          <p>{{ e['description'] }}</p>
+          <p><b>Date:</b> {{ e['date'] or 'N/A' }}</p>
+          <p><b>Fee:</b> ₹{{ e['fee'] or 0 }}</p>
+          <p><b>Max Members:</b> {{ e['max_members'] or 'Unlimited' }}</p>
+
+          {% if session.get('role') == 'participant' %}
+            <a class="btn" href="{{ url_for('register_event', event_id=e['id']) }}">Register</a>
+          {% elif session.get('role') == 'admin' %}
+            <a class="btn" href="{{ url_for('participants', event_id=e['id']) }}">View Participants</a>
+            <a class="btn" href="{{ url_for('export_participants', event_id=e['id']) }}">Export CSV</a>
+          {% else %}
+            <small>Login as participant to register or admin to manage.</small>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No events yet.</p>
+  {% endif %}
+
+  {% if session.get('role') == 'admin' %}
+    <p><a class="btn" href="{{ url_for('create_event') }}">+ Create New Event</a></p>
+  {% endif %}
+{% endblock %}

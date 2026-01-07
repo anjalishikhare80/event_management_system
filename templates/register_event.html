@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Register for: {{ event['title'] }}</h2>
+  <p>{{ event['description'] }}</p>
+  <form method="post" action="{{ url_for('register_event', event_id=event['id']) }}">
+    <p>Click Register to confirm your registration.</p>
+    <button type="submit">Register</button>
+  </form>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Participants for "{{ event['title'] }}"</h2>
+  {% if participants %}
+    <ul>
+      {% for p in participants %}
+        <li>
+          {{ p['username'] }}
+          <a class="small" href="{{ url_for('remove_participant', event_id=event['id'], user_id=p['id']) }}">Remove</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>No participants yet.</p>
+  {% endif %}
+  <p><a class="btn" href="{{ url_for('index') }}">⬅ Back to events</a></p>
+{% endblock %}
