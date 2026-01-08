@@ -2,27 +2,37 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Event Registration</title>
+  <title>Event Management</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <!-- Header / Navbar -->
-  <header>
-    <div class="nav-container">
-      <div class="logo">
-        <a href="{{ url_for('index') }}">EventReg</a>
-      </div>
-      <div class="nav-links">
-        {% if session.get('username') %}
-          <span class="nav-welcome">Hello {{ session['username'] }} ({{ session['role'] }})</span>
-          <a class="btn-nav" href="{{ url_for('logout') }}">Logout</a>
-        {% else %}
-          <a href="{{ url_for('signup') }}">Signup</a>
-          <a href="{{ url_for('login') }}">Login</a>
-        {% endif %}
-      </div>
-    </div>
-  </header>
+<!-- Header / Navbar -->
+<header style="display:flex; align-items:center; justify-content:space-between; padding:10px 20px; border-bottom:1px solid #ddd;">
+
+  <!-- Left: Logo -->
+  <div class="logo">
+    <a href="{{ url_for('index') }}">
+      <img src="{{ url_for('static', filename='event3.png') }}" alt="EventManagement Logo" style="height:60px; vertical-align:middle;">
+    </a>
+  </div>
+
+  <!-- Right: User info + logout -->
+  <div class="nav-links">
+
+    {% if session.get('username') %}
+        <span class="nav-welcome">
+            Hello {{ session['username'] }} ({{ session['role'] }})
+        </span>
+
+        <a class="btn-nav" href="{{ url_for('logout') }}" style="margin-left:12px;">
+            Logout
+        </a>
+    {% endif %}
+
+  </div>
+
+</header>
+
 
   <!-- Page Content -->
   <div class="container">
@@ -39,7 +49,7 @@
 
   <!-- Footer -->
   <footer>
-    &copy; {{ 2025 }} Event Registration System | Designed for better user experience
+    &copy; {{ 2025 }} Event Management System | Designed for better user experience | All Rights Reserved.
   </footer>
 </body>
 </html>

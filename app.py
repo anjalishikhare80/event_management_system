@@ -1,15 +1,30 @@
 import os
 import sqlite3
 from flask import Flask, render_template, request, redirect, url_for, session, g, flash, send_file
+from werkzeug.utils import secure_filename
+import csv
+import io
+from flask import send_file
 
-# --- Setup ---
+
+
+# ------------------ APP SETUP ------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE = os.path.join(BASE_DIR, "event_registration.db")
 
 app = Flask(__name__)
-app.secret_key = "replace_this_with_a_random_secret"
+app.secret_key = "replace_with_random_secret"
 
-# --- DB helpers ---
+UPLOAD_FOLDER = os.path.join("static", "uploads")
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+
+# ------------------ DB CONNECTION ------------------
 def get_db():
     if "db" not in g:
         g.db = sqlite3.connect(DATABASE)
@@ -22,12 +37,22 @@ def close_db(exc):
     if db is not None:
         db.close()
 
-# --- Routes ---
+
+# ------------------ HELPERS ------------------
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+# ------------------ ROUTES ------------------
+
 @app.route("/")
 def index():
     db = get_db()
     events = db.execute("SELECT * FROM events").fetchall()
     return render_template("index.html", events=events)
+
+
+# ------------ USER AUTH ------------
 
 @app.route("/signup", methods=["GET","POST"])
 def signup():
@@ -35,25 +60,29 @@ def signup():
         username = request.form["username"].strip()
         password = request.form["password"].strip()
         role = request.form.get("role","participant")
+
         db = get_db()
         try:
             db.execute("INSERT INTO users (username,password,role) VALUES (?,?,?)",
                        (username, password, role))
             db.commit()
-            flash("Signup successful — please login.", "success")
+            flash("Signup successful — login now", "success")
             return redirect(url_for("login"))
         except sqlite3.IntegrityError:
-            flash("Username already exists.", "danger")
+            flash("Username already exists", "danger")
     return render_template("signup.html")
+
 
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"].strip()
         password = request.form["password"].strip()
+
         db = get_db()
         user = db.execute("SELECT * FROM users WHERE username=? AND password=?",
                           (username,password)).fetchone()
+
         if user:
             session["user_id"] = user["id"]
             session["username"] = user["username"]
@@ -61,117 +90,169 @@ def login():
             flash(f"Welcome {user['username']}!", "success")
             return redirect(url_for("index"))
         else:
-            flash("Invalid username or password.", "danger")
+            flash("Invalid credentials", "danger")
+
     return render_template("login.html")
+
 
 @app.route("/logout")
 def logout():
     session.clear()
-    flash("Logged out.", "info")
+    flash("Logged out", "info")
     return redirect(url_for("index"))
 
-# Admin: create event
+
+# ------------ ADMIN CREATE EVENT ------------
+
 @app.route("/create_event", methods=["GET","POST"])
 def create_event():
     if session.get("role") != "admin":
-        flash("Only admins can create events.", "danger")
+        flash("Admin access only", "danger")
         return redirect(url_for("login"))
+
     if request.method == "POST":
-        title = request.form["title"].strip()
-        description = request.form["description"].strip()
-        date = request.form["date"].strip()
-        fee = float(request.form["fee"] or 0)
-        max_members = int(request.form["max_members"] or 0)
+        title = request.form["title"]
+        description = request.form["description"]
+        date = request.form["date"]
+        fee = request.form["fee"]
+        max_members = request.form["max_members"]
+
         db = get_db()
         db.execute("INSERT INTO events (title,description,date,fee,max_members) VALUES (?,?,?,?,?)",
                    (title,description,date,fee,max_members))
         db.commit()
-        flash("Event created.", "success")
+
+        flash("Event created successfully", "success")
         return redirect(url_for("index"))
+
     return render_template("create_event.html")
 
-# Participant: register for event
+
+# ------------ PARTICIPANT EVENT REGISTRATION FORM ------------
+
 @app.route("/register_event/<int:event_id>", methods=["GET","POST"])
 def register_event(event_id):
+
     if session.get("role") != "participant":
-        flash("Only participants can register.", "danger")
+        flash("Login as participant to register", "danger")
         return redirect(url_for("login"))
+
     db = get_db()
     event = db.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
+
     if not event:
-        flash("Event not found.", "danger")
+        flash("Event not found", "danger")
         return redirect(url_for("index"))
 
-    # insert registration (user -> event)
-    db.execute("INSERT INTO registrations (event_id, user_id) VALUES (?,?)",
-               (event_id, session["user_id"]))
-    db.commit()
-    flash(f"Registered for {event['title']}.", "success")
-    return redirect(url_for("index"))
+    if request.method == "POST":
 
-# Admin: view participants for an event
+        full_name = request.form["full_name"]
+        mobile = request.form["mobile"]
+        email = request.form["email"]
+        college = request.form["college"]
+        year = request.form["year"]
+        branch = request.form["branch"]
+
+        file = request.files["payment_screenshot"]
+
+        if not file or not allowed_file(file.filename):
+            flash("Upload JPG or PNG only", "danger")
+            return redirect(request.url)
+
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+        file.save(filepath)
+
+        db.execute("""
+            INSERT INTO registrations 
+            (event_id, user_id, full_name, mobile, email, college, year, branch, payment_image)
+            VALUES (?,?,?,?,?,?,?,?,?)
+        """, (event_id, session["user_id"], full_name, mobile, email, college, year, branch, filename))
+
+        db.commit()
+
+        flash("Registration submitted successfully!", "success")
+        return redirect(url_for("index"))
+
+    return render_template("register_event.html", event=event)
+
+
+# ------------ ADMIN VIEW PARTICIPANTS ------------
+
+# ------------ ADMIN VIEW PARTICIPANTS ------------
 @app.route("/participants/<int:event_id>")
 def participants(event_id):
-    if session.get("role") != "admin":
-        flash("Only admins can view participants.", "danger")
-        return redirect(url_for("login"))
-    db = get_db()
-    event = db.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
-    if not event:
-        flash("Event not found.", "danger")
-        return redirect(url_for("index"))
-    rows = db.execute("""
-        SELECT u.id, u.username
-        FROM registrations r
-        JOIN users u ON r.user_id = u.id
-        WHERE r.event_id = ?
-    """, (event_id,)).fetchall()
-    return render_template("participants.html", event=event, participants=rows)
 
-# Admin: remove participant from event
-@app.route("/remove_participant/<int:event_id>/<int:user_id>")
-def remove_participant(event_id, user_id):
     if session.get("role") != "admin":
-        flash("Only admins can remove participants.", "danger")
+        flash("Admin access only", "danger")
         return redirect(url_for("login"))
-    db = get_db()
-    db.execute("DELETE FROM registrations WHERE event_id=? AND user_id=?", (event_id,user_id))
-    db.commit()
-    flash("Participant removed.", "info")
-    return redirect(url_for("participants", event_id=event_id))
 
-# Admin: export participants to CSV
-@app.route("/export_participants/<int:event_id>")
-def export_participants(event_id):
-    if session.get("role") != "admin":
-        flash("Only admins can export.", "danger")
-        return redirect(url_for("login"))
     db = get_db()
-    event = db.execute("SELECT * FROM events WHERE id=?", (event_id,)).fetchone()
-    rows = db.execute("""
-        SELECT u.username
-        FROM registrations r
-        JOIN users u ON r.user_id = u.id
-        WHERE r.event_id=?
+
+    participants = db.execute("""
+        SELECT *
+        FROM registrations
+        WHERE event_id=?
     """, (event_id,)).fetchall()
-    # create temporary CSV
-    csv_path = os.path.join(BASE_DIR, f"participants_event_{event_id}.csv")
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        import csv
-        w = csv.writer(f)
-        w.writerow(["username"])
-        for r in rows:
-            w.writerow([r["username"]])
-    return send_file(csv_path, as_attachment=True)
+
+    event = db.execute(
+        "SELECT * FROM events WHERE id=?",
+        (event_id,)
+    ).fetchone()
+
+    return render_template(
+        "participants.html",
+        event=event,
+        participants=participants
+    )
+
+
+# ------------ ADMIN EXPORT CSV ------------
+@app.route("/export/<int:event_id>")
+def export(event_id):
+
+    if session.get("role") != "admin":
+        flash("Admin access only", "danger")
+        return redirect(url_for("login"))
+
+    db = get_db()
+
+    rows = db.execute("""
+        SELECT full_name, mobile, email, college, year, branch
+        FROM registrations
+        WHERE event_id=?
+    """, (event_id,)).fetchall()
+
+    si = io.StringIO()
+    cw = csv.writer(si)
+
+    # CSV Header
+    cw.writerow(["Full Name", "Mobile", "Email", "College", "Year", "Branch"])
+
+    # CSV Rows
+    for r in rows:
+        cw.writerow([
+            r["full_name"],
+            r["mobile"],
+            r["email"],
+            r["college"],
+            r["year"],
+            r["branch"]
+        ])
+
+    output = io.BytesIO()
+    output.write(si.getvalue().encode("utf-8"))
+    output.seek(0)
+
+    return send_file(
+        output,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name="participants.csv"
+    )
+
+
+# ------------ RUN APP ------------
 
 if __name__ == "__main__":
-    # If DB missing, instruct user to run init_db.py or run it automatically:
-    if not os.path.exists(DATABASE):
-        # try to run the initializer automatically
-        try:
-            from init_db import init_db
-            init_db()
-            print("Database created by init_db.py")
-        except Exception as e:
-            print("Database missing and init_db.py could not run:", e)
     app.run(debug=True)

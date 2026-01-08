@@ -1,14 +1,12 @@
 import sqlite3
 
-# Database file name
 DATABASE = "event_registration.db"
 
 def init_db():
-    # Connect to the SQLite database (it will be created if it doesn’t exist)
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
-    # Create users table (stores login info + role: admin or participant)
+    # ---------- USERS ----------
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -18,37 +16,42 @@ def init_db():
         )
     ''')
 
-    # Create events table (stores event details created by admins)
+    # ---------- EVENTS ----------
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT NOT NULL,
             description TEXT,
-            date TEXT,              -- ✅ Added date column
+            date TEXT,
             fee REAL,
-            max_members INTEGER,    -- ✅ Added max_members column
+            max_members INTEGER,
             created_by INTEGER,
             FOREIGN KEY (created_by) REFERENCES users (id)
         )
     ''')
 
-    # Create registrations table (stores which user registered for which event)
+    # ---------- REGISTRATIONS WITH FULL DETAILS ----------
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS registrations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
             event_id INTEGER,
+            full_name TEXT,
+            mobile TEXT,
+            email TEXT,
+            college TEXT,
+            year TEXT,
+            branch TEXT,
+            payment_image TEXT,
             FOREIGN KEY (user_id) REFERENCES users (id),
             FOREIGN KEY (event_id) REFERENCES events (id)
         )
     ''')
 
-    # Save changes and close
     conn.commit()
     conn.close()
 
-    print("✅ Database initialized with tables: users, events, registrations")
+    print("✅ Database initialized successfully")
 
-# Run the function if this file is executed directly
 if __name__ == "__main__":
     init_db()

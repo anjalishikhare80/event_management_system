@@ -1,6 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
-  <h1>Available Events</h1>
+
+{% if not session.get('username') %}
+  
+  <h2>Welcome to Event Management System</h2>
+  <p>Please login to view upcoming events.</p>
+
+  <a class="btn" href="{{ url_for('login') }}">Login</a>
+  <a class="btn" href="{{ url_for('signup') }}">Signup</a>
+
+{% else %}
+
+  <h1>UPCOMING EVENTS</h1>
+
   {% if events %}
     <ul class="events">
       {% for e in events %}
@@ -15,7 +27,7 @@
             <a class="btn" href="{{ url_for('register_event', event_id=e['id']) }}">Register</a>
           {% elif session.get('role') == 'admin' %}
             <a class="btn" href="{{ url_for('participants', event_id=e['id']) }}">View Participants</a>
-            <a class="btn" href="{{ url_for('export_participants', event_id=e['id']) }}">Export CSV</a>
+            <a class="btn" href="{{ url_for('participants', event_id=e['id']) }}">Export CSV</a>
           {% else %}
             <small>Login as participant to register or admin to manage.</small>
           {% endif %}
@@ -29,4 +41,7 @@
   {% if session.get('role') == 'admin' %}
     <p><a class="btn" href="{{ url_for('create_event') }}">+ Create New Event</a></p>
   {% endif %}
+
+{% endif %}
+
 {% endblock %}
