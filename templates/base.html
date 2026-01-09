@@ -6,17 +6,15 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-<!-- Header / Navbar -->
+
 <header style="display:flex; align-items:center; justify-content:space-between; padding:10px 20px; border-bottom:1px solid #ddd;">
 
-  <!-- Left: Logo -->
   <div class="logo">
     <a href="{{ url_for('index') }}">
       <img src="{{ url_for('static', filename='event3.png') }}" alt="EventManagement Logo" style="height:60px; vertical-align:middle;">
     </a>
   </div>
 
-  <!-- Right: User info + logout -->
   <div class="nav-links">
 
     {% if session.get('username') %}
@@ -33,23 +31,24 @@
 
 </header>
 
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
 
-  <!-- Page Content -->
-  <div class="container">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        {% for category, message in messages %}
-          <div class="flash {{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endif %}
-    {% endwith %}
+  {% block content %}{% endblock %}
+</div>
 
-    {% block content %}{% endblock %}
-  </div>
+<footer>
+  &copy; {{ 2025 }} Event Management System | Designed for better user experience | All Rights Reserved.
+</footer>
 
-  <!-- Footer -->
-  <footer>
-    &copy; {{ 2025 }} Event Management System | Designed for better user experience | All Rights Reserved.
-  </footer>
+<!-- 🔹 ADD THIS LINE -->
+{% block scripts %}{% endblock %}
+
 </body>
 </html>

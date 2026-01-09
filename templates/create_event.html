@@ -1,24 +1,124 @@
 {% extends "base.html" %}
 {% block content %}
-  <h2>Create Event</h2>
-  <form method="post">
-    <label>Title</label>
-    <input name="title" required>
 
-    <label>Description</label>
-    <textarea name="description"></textarea>
+<div class="page-center">
 
-    <label>Date</label>
-    <input type="date" name="date">
+  <div class="event-card">
 
-    <label>Fee (₹)</label>
-    <input type="number" step="0.01" name="fee">
+    <h2 style="text-align:center;">Create Event</h2>
 
-    <label>Max Members</label>
-    <input type="number" name="max_members">
+    <form method="post" class="event-form">
 
+      <label>Event Title *</label>
+      <input name="title" required placeholder="Enter event title">
 
+      <label>Description *</label>
+      <textarea name="description" required minlength="10" placeholder="Enter event description"></textarea>
 
-    <button type="submit">Create</button>
-  </form>
+      <label>Category *</label>
+      <select name="category" required>
+        <option value="" disabled selected>Select Category</option>
+        <option>Technical</option>
+        <option>Cultural</option>
+        <option>Workshop</option>
+        <option>Sports</option>
+        <option>Seminar</option>
+        <option>Hackathon</option>
+      </select>
+
+      <label>Event Date *</label>
+      <input type="date" name="date" required>
+
+      <label>Start Time *</label>
+      <input type="time" name="start_time" required>
+
+      <label>End Time</label>
+      <input type="time" name="end_time">
+
+      <label>Venue *</label>
+      <input name="venue" required placeholder="Auditorium, Lab 301, etc.">
+
+      <label>Last Date for Registration *</label>
+      <input type="date" name="last_date" required>
+
+      <label>Registration Fee (₹)</label>
+      <input type="number" name="fee" step="0.01" min="0" value="0">
+
+      <!-- <label>Max Participants *</label>
+      <input type="number" name="max_members" min="1" required> -->
+
+      <label>Event Type *</label>
+      <select name="is_team_event" required>
+        <option value="no">Individual</option>
+        <option value="yes">Team</option>
+      </select>
+
+      <label>Maximum Team Size</label>
+      <input type="number" name="team_size" min="1">
+
+      <label>Organizer Name *</label>
+      <input name="organizer_name" required>
+
+      <label>Organizer Contact *</label>
+      <input name="organizer_contact" required placeholder="Mobile or Email">
+
+      <label>Status *</label>
+      <select name="status" required>
+        <option value="Upcoming">Upcoming</option>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Completed">Completed</option>
+        <option value="Cancelled">Cancelled</option>
+      </select>
+
+      <button type="submit">Create Event</button>
+
+    </form>
+
+  </div>
+</div>
+
+<style>
+/* Centers whole page content */
+.page-center{
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding-top:30px;
+}
+
+/* Card container */
+.event-card{
+  width:650px;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 0 15px rgba(0,0,0,0.15);
+  background:white;
+}
+
+/* Form spacing */
+.event-form{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+/* Input styling */
+.event-form input,
+.event-form textarea,
+.event-form select{
+  padding:8px;
+  border-radius:5px;
+  border:1px solid gray;
+}
+
+/* Button styling */
+button{
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  font-weight:bold;
+  cursor:pointer;
+}
+</style>
+
 {% endblock %}

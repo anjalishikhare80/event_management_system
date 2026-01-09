@@ -11,37 +11,100 @@
 
 {% else %}
 
-  <h1>UPCOMING EVENTS</h1>
+  <h1 style="text-align:center;">UPCOMING EVENTS</h1>
 
   {% if events %}
     <ul class="events">
-      {% for e in events %}
-        <li class="event-card">
-          <h3>{{ e['title'] }}</h3>
-          <p>{{ e['description'] }}</p>
-          <p><b>Date:</b> {{ e['date'] or 'N/A' }}</p>
+    {% for e in events %}
+      <li class="event-card">
+
+        <h2>{{ e['title'] }}</h2>
+
+        <p>{{ e['description'][:80] }}{% if e['description']|length > 80 %}...{% endif %}</p>
+
+        <p><b>Date:</b> {{ e['date'] or 'N/A' }}</p>
+        <p><b>Venue:</b> {{ e['venue'] or 'N/A' }}</p>
+        <p><b>Status:</b> {{ e['status'] or 'Upcoming' }}</p>
+
+        <!-- HIDDEN DETAILS -->
+        <div class="more-box" style="display:none;">
+
+          <p><b>Category:</b> {{ e['category'] or 'N/A' }}</p>
+          <p><b>Start Time:</b> {{ e['start_time'] or 'N/A' }}</p>
+          <p><b>End Time:</b> {{ e['end_time'] or 'N/A' }}</p>
+          <p><b>Last Registration Date:</b> {{ e['last_date'] or 'N/A' }}</p>
+
+          <p><b>Event Type:</b> {{ 'Team' if e['is_team_event']=='yes' else 'Individual' }}</p>
+          <p><b>Team Size:</b> {{ e['team_size'] or 'N/A' }}</p>
+
+          <p><b>Organizer:</b> {{ e['organizer_name'] or 'N/A' }}</p>
+          <p><b>Organizer Contact:</b> {{ e['organizer_contact'] or 'N/A' }}</p>
+
           <p><b>Fee:</b> ₹{{ e['fee'] or 0 }}</p>
           <p><b>Max Members:</b> {{ e['max_members'] or 'Unlimited' }}</p>
 
-          {% if session.get('role') == 'participant' %}
-            <a class="btn" href="{{ url_for('register_event', event_id=e['id']) }}">Register</a>
-          {% elif session.get('role') == 'admin' %}
-            <a class="btn" href="{{ url_for('participants', event_id=e['id']) }}">View Participants</a>
-            <a class="btn" href="{{ url_for('participants', event_id=e['id']) }}">Export CSV</a>
-          {% else %}
-            <small>Login as participant to register or admin to manage.</small>
-          {% endif %}
-        </li>
-      {% endfor %}
+        </div>
+
+        <!-- SMALL TEXT BUTTON -->
+        <button class="show-text" 
+                style="background:none;border:none;color:blue;cursor:pointer;font-size:12px;">
+            Show more
+        </button>
+
+        <br><br>
+
+        {% if session.get('role') == 'participant' %}
+          <a class="btn" href="{{ url_for('register_event', event_id=e['id']) }}">Register</a>
+
+        {% elif session.get('role') == 'admin' %}
+          <a class="btn" href="{{ url_for('participants', event_id=e['id']) }}">View Participants</a>
+          <a class="btn" href="{{ url_for('export', event_id=e['id']) }}">Export CSV</a>
+
+        {% endif %}
+
+      </li>
+    {% endfor %}
     </ul>
+
   {% else %}
     <p>No events yet.</p>
   {% endif %}
 
   {% if session.get('role') == 'admin' %}
-    <p><a class="btn" href="{{ url_for('create_event') }}">+ Create New Event</a></p>
+    <p style="text-align:center;">
+      <a class="btn" href="{{ url_for('create_event') }}">+ Create New Event</a>
+    </p>
   {% endif %}
 
 {% endif %}
 
 {% endblock %}
+
+<!-- ⭐⭐ JAVASCRIPT THAT DEFINITELY WORKS ⭐⭐ -->
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+  const buttons = document.querySelectorAll(".show-text");
+
+  buttons.forEach(function(btn){
+
+      btn.addEventListener("click", function(){
+
+          const card = btn.closest(".event-card");
+          const box = card.querySelector(".more-box");
+
+          if (box.style.display === "none" || box.style.display === "") {
+              box.style.display = "block";
+              btn.textContent = "Show less";
+          } else {
+              box.style.display = "none";
+              btn.textContent = "Show more";
+          }
+      });
+  });
+
+});
+</script>
+{% endblock %}
+

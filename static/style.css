@@ -212,6 +212,7 @@ textarea{
   min-height:90px;
 }
 
+
 /* ===== Footer ===== */
 footer{
   margin-top:40px;
@@ -220,3 +221,21 @@ footer{
   padding:16px;
   font-size:13px;
 }
+
+
+
+
+/* css */
+
+
+.show-text{
+  all: unset;          /* removes button box completely */
+  font-size: 11px;     /* makes it smaller */
+  color: #0066cc;      /* link-like color */
+  cursor: pointer;
+}
+
+.show-text:hover{
+  text-decoration: underline;
+}
+

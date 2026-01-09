@@ -111,22 +111,46 @@ def create_event():
         return redirect(url_for("login"))
 
     if request.method == "POST":
+
+        # -------- NEW FIELDS FROM YOUR HTML --------
         title = request.form["title"]
         description = request.form["description"]
+        category = request.form["category"]
         date = request.form["date"]
+        start_time = request.form["start_time"]
+        end_time = request.form["end_time"]
+        venue = request.form["venue"]
+        last_date = request.form["last_date"]
         fee = request.form["fee"]
-        max_members = request.form["max_members"]
+        is_team_event = request.form["is_team_event"]
+        team_size = request.form.get("team_size")
+        organizer_name = request.form["organizer_name"]
+        organizer_contact = request.form["organizer_contact"]
+        status = request.form["status"]
 
         db = get_db()
-        db.execute("INSERT INTO events (title,description,date,fee,max_members) VALUES (?,?,?,?,?)",
-                   (title,description,date,fee,max_members))
+
+
+        db.execute("""
+            INSERT INTO events
+            (title, description, category, date, start_time, end_time, venue,
+            last_date, fee, is_team_event, team_size,
+            organizer_name, organizer_contact, status)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         """,
+         (title, description, category, date, start_time, end_time, venue,
+         last_date, fee, is_team_event, team_size,
+         organizer_name, organizer_contact, status))
+
+
+        
+
         db.commit()
 
         flash("Event created successfully", "success")
         return redirect(url_for("index"))
 
     return render_template("create_event.html")
-
 
 # ------------ PARTICIPANT EVENT REGISTRATION FORM ------------
 
@@ -177,7 +201,7 @@ def register_event(event_id):
     return render_template("register_event.html", event=event)
 
 
-# ------------ ADMIN VIEW PARTICIPANTS ------------
+
 
 # ------------ ADMIN VIEW PARTICIPANTS ------------
 @app.route("/participants/<int:event_id>")

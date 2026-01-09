@@ -18,17 +18,26 @@ def init_db():
 
     # ---------- EVENTS ----------
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT NOT NULL,
-            description TEXT,
-            date TEXT,
-            fee REAL,
-            max_members INTEGER,
-            created_by INTEGER,
-            FOREIGN KEY (created_by) REFERENCES users (id)
-        )
-    ''')
+    CREATE TABLE IF NOT EXISTS events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        category TEXT,
+        date TEXT NOT NULL,
+        start_time TEXT,
+        end_time TEXT,
+        venue TEXT NOT NULL,
+        last_date TEXT NOT NULL,
+        fee REAL,
+        
+        is_team_event TEXT,
+        team_size INTEGER,
+        organizer_name TEXT NOT NULL,
+        organizer_contact TEXT NOT NULL,
+        status TEXT NOT NULL
+    )
+''')
+
 
     # ---------- REGISTRATIONS WITH FULL DETAILS ----------
     cursor.execute('''
